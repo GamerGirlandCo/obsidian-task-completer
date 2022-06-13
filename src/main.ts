@@ -1,21 +1,11 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, ListItemCache } from 'obsidian';
-import {SampleSettingTab} from "./SettingsTab";
-import { getAPI, DataviewApi, Literal} from "obsidian-dataview";
+import { Editor, MarkdownView, Plugin } from 'obsidian';
+import { getAPI, DataviewApi } from "obsidian-dataview";
 import {TaskUtil} from "./TaskUtil";
 // import {findTasksInFile, parseMarkdown, parsePage} from "obsidian-dataview/lib/data/file";
 
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
-	mySetting: string;
-}
-
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
-
 export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
 	dvapi: DataviewApi;
 	TU: TaskUtil;
 	curnum: number;
@@ -24,7 +14,7 @@ export default class MyPlugin extends Plugin {
 	
 	subs(pa: any[]): Array<any> {
 		const la: any = [];
-		function tick(b) {
+		function tick(b: any) {
 			la.push(b.children.map(tick))
 			console.log("la", la, pa)
 			return b.line
@@ -37,7 +27,6 @@ export default class MyPlugin extends Plugin {
 	}
 	
 	async onload() {
-		await this.loadSettings();
 		this.isWorking = false;
 		this.dvapi = getAPI();
 		this.TU = new TaskUtil()
@@ -49,8 +38,8 @@ export default class MyPlugin extends Plugin {
 				const activeFile = this.app.workspace.getActiveFile();
 				const curse = editor.offsetToPos(this.curnum).line;
 				const source = this.dvapi.page(activeFile.path).file
-				const children = source.tasks.values.filter(a => a.parent === curse)
-				const parent = source.tasks.values.filter(a => a.line === curse)[0]
+				const children = source.tasks.values.filter((a: any) => a.parent === curse)
+				const parent = source.tasks.values.filter((a: any) => a.line === curse)[0]
 				editor.setCursor(curse)
 				this.subs(children).flat(Infinity).forEach(l => {
 					this.dvapi.index.touch();
@@ -65,7 +54,6 @@ export default class MyPlugin extends Plugin {
 						editor.setLine(l, edit);
 					}
 				})
-				// console.log()
 				console.log(source.tasks.values)
 				console.log(curse)
 				console.log(children, parent)
@@ -83,7 +71,8 @@ export default class MyPlugin extends Plugin {
 			}
 		});
 		this.registerDomEvent(document, 'click', async (evt: MouseEvent) => {
-			let tgt = evt.target;
+			// @ts-ignore
+			let tgt: EventTarget & HTMLElement & {cmView: any} = evt.target;
 			if(tgt.tagName.toLowerCase() !== "input" || !!tgt.getAttribute("disabled")) {
 				return
 			}
@@ -93,7 +82,8 @@ export default class MyPlugin extends Plugin {
 			tgt.setAttribute("disabled", "")
 			await this.timeMe()
 			tgt.removeAttribute("disabled")
-			// console.log('clk', tgt);
+			
+			// @ts-ignore
 			this.app.commands.executeCommandById("obsidian-auto-checkbox:recursive-check-tik")
 			
 		});
@@ -107,14 +97,5 @@ export default class MyPlugin extends Plugin {
 
 	onunload() {
 
-	}
-	
-	
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
 	}
 }
