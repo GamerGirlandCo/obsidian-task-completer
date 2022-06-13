@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from 'builtin-modules'
+import {execSync} from "child_process";
 
 const banner =
 `/*
@@ -20,6 +21,7 @@ esbuild.build({
 	external: [
 		'obsidian',
 		'electron',
+		"obsidian-dataview/lib",
 		'@codemirror/autocomplete',
 		'@codemirror/closebrackets',
 		'@codemirror/collab',
@@ -43,7 +45,15 @@ esbuild.build({
 		'@codemirror/view',
 		...builtins],
 	format: 'cjs',
-	watch: !prod,
+	watch: {
+		onRebuild(error, result) {
+			if (error) console.error('watch build failed:', error)
+			else console.log('watch build succeeded:', result)
+			
+			// console.log("fuckyou")
+			execSync("pwsh .\\copy.ps1")
+		},
+	},
 	target: 'es2016',
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',

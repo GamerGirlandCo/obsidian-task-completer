@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {App, Editor, MarkdownView, MetadataCache, Modal, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import MyPlugin from "./main";
 
 export class SampleSettingTab extends PluginSettingTab {
@@ -8,10 +8,9 @@ export class SampleSettingTab extends PluginSettingTab {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
-	
 	display(): void {
 		const {containerEl} = this;
-		
+		//change
 		containerEl.empty();
 		
 		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});

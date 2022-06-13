@@ -1,5 +1,8 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, ListItemCache } from 'obsidian';
 import {SampleSettingTab} from "./SettingsTab";
+import { getAPI, DataviewApi, Literal} from "obsidian-dataview";
+import {TaskUtil} from "./TaskUtil";
+// import {findTasksInFile, parseMarkdown, parsePage} from "obsidian-dataview/lib/data/file";
 
 // Remember to rename these classes and interfaces!
 
@@ -13,80 +16,105 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
-
+	dvapi: DataviewApi;
+	TU: TaskUtil;
+	curnum: number;
+	isWorking: boolean;
+	
+	
+	subs(pa: any[]): Array<any> {
+		const la: any = [];
+		function tick(b) {
+			la.push(b.children.map(tick))
+			console.log("la", la, pa)
+			return b.line
+		}
+		pa.map(a => {
+			la.push(a.line)
+		})
+		pa.map(tick)
+		return la;
+	}
+	
 	async onload() {
 		await this.loadSettings();
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		// const statusBarItemEl = this.addStatusBarItem();
-		// statusBarItemEl.setText('Status Bar Text');
-		// This adds an editor command that can perform some operation on the current editor instance
+		this.isWorking = false;
+		this.dvapi = getAPI();
+		this.TU = new TaskUtil()
 		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
+			id: 'recursive-check-tik',
+			name: 'check checkbox recursively',
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
+				this.isWorking = true;
+				const activeFile = this.app.workspace.getActiveFile();
+				const curse = editor.offsetToPos(this.curnum).line;
+				const source = this.dvapi.page(activeFile.path).file
+				const children = source.tasks.values.filter(a => a.parent === curse)
+				const parent = source.tasks.values.filter(a => a.line === curse)[0]
+				editor.setCursor(curse)
+				this.subs(children).flat(Infinity).forEach(l => {
+					this.dvapi.index.touch();
+					this.app.workspace.trigger("dataview:refresh-views");
+					let origLine = editor.getLine(parent.line)
+					let line = editor.getLine(l);
+					if(parent.completed) {
+						let edit = this.TU.check(line)
+						editor.setLine(l, edit)
+					} else {
+						let edit = this.TU.uncheck(line);
+						editor.setLine(l, edit);
 					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
+				})
+				// console.log()
+				console.log(source.tasks.values)
+				console.log(curse)
+				console.log(children, parent)
+				/*const ws = this.app.workspace;
+				const cache = mcache.getFileCache(ws.getActiveFile())
+				// console.log(curs);
+				// console.log(cache)
+				const tasks = cache.listItems.filter(a => !!a.task)
+				const currchildren = tasks.filter(a => a.parent === curs.line)
+				curr
+				console.log(tasks)
+				console.log(currchildren)
+				console.log(view)
+				console.log(editor)*/
 			}
 		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
+		this.registerDomEvent(document, 'click', async (evt: MouseEvent) => {
+			let tgt = evt.target;
+			if(tgt.tagName.toLowerCase() !== "input" || !!tgt.getAttribute("disabled")) {
+				return
+			}
+			this.curnum = tgt.cmView.editorView.posAtDOM(tgt);
+			this.dvapi.index.touch();
+			this.app.workspace.trigger("dataview:refresh-views");
+			tgt.setAttribute("disabled", "")
+			await this.timeMe()
+			tgt.removeAttribute("disabled")
+			// console.log('clk', tgt);
+			this.app.commands.executeCommandById("obsidian-auto-checkbox:recursive-check-tik")
+			
 		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+	}
+	timeMe():Promise<void> {
+		return new Promise((res, rej) => {
+			this.isWorking = false;
+			setTimeout(res, 2500)
+		})
 	}
 
 	onunload() {
 
 	}
-
+	
+	
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
 	}
 }
