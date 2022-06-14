@@ -12,19 +12,6 @@ export default class MyPlugin extends Plugin {
 	isWorking: boolean;
 	
 	
-	subs(pa: any[]): Array<any> {
-		const la: any = [];
-		function tick(b: any) {
-			la.push(b.children.map(tick))
-			console.log("la", la, pa)
-			return b.line
-		}
-		pa.map(a => {
-			la.push(a.line)
-		})
-		pa.map(tick)
-		return la;
-	}
 	
 	async onload() {
 		this.isWorking = false;
@@ -93,6 +80,20 @@ export default class MyPlugin extends Plugin {
 			this.isWorking = false;
 			setTimeout(res, 2500)
 		})
+	}
+	
+	subs(pa: any[]): Array<any> {
+		const la: any = [];
+		function tick(b: any) {
+			la.push(b.children.map(tick))
+			console.log("la", la, pa)
+			return b.line
+		}
+		pa.map(a => {
+			la.push(a.line)
+		})
+		pa.map(tick)
+		return la;
 	}
 
 	onunload() {
