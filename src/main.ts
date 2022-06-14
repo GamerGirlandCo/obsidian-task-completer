@@ -18,7 +18,7 @@ export default class MyPlugin extends Plugin {
 		this.dvapi = getAPI();
 		this.TU = new TaskUtil()
 		this.addCommand({
-			id: 'recursive-check-tik',
+			id: 'recursive-tick',
 			name: 'check checkbox recursively',
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				this.isWorking = true;

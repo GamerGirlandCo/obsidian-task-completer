@@ -4,7 +4,7 @@
 	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",
 	"scripts": {
-		"dev": "node esbuild.config.mjs --external:./node_modules/obsidian-dataview/lib/*",
+		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && .\\copy.ps1",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},

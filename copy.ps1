@@ -5,6 +5,5 @@ if (Test-Path -Path $vaultdir\.obsidian\plugins\obsidian-auto-checkbox) {
 	mkdir $vaultdir\.obsidian\plugins\obsidian-auto-checkbox
 }
 
-
-cp main.js $vaultdir\.obsidian\plugins\obsidian-auto-checkbox
-cp manifest.json $vaultdir\.obsidian\plugins\obsidian-auto-checkbox
+Copy-Item main.js $vaultdir\.obsidian\plugins\obsidian-auto-checkbox
+Copy-Item manifest.json $vaultdir\.obsidian\plugins\obsidian-auto-checkbox
