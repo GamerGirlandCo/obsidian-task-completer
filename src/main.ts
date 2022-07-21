@@ -11,13 +11,8 @@ import {TaskUtil} from "./TaskUtil";
 export default class MyPlugin extends Plugin {
 	dvapi: DataviewApi;
 	TU: TaskUtil;
-	curnum: number;
-	isWorking: boolean;
-	
-	
 	
 	async onload() {
-		this.isWorking = false;
 		this.dvapi = getAPI();
 		this.TU = new TaskUtil()
 		this.registerDomEvent<"click">(window, "click", async (evt) => {
