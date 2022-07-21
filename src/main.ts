@@ -8,7 +8,7 @@ import {TaskUtil} from "./TaskUtil";
 
 // Remember to rename these classes and interfaces!
 
-export default class MyPlugin extends Plugin {
+export default class TaskCompleter extends Plugin {
 	dvapi: DataviewApi;
 	TU: TaskUtil;
 	curnum: number;
@@ -52,37 +52,16 @@ export default class MyPlugin extends Plugin {
 					}
 				})
 				console.log("hi.")
-				// console.log(cursor)
 				console.log(source.tasks.values.map(mapper))
 				console.log(children, this.recurseSubtasks(children))
-				// console.log(view)
-				// console.log(editor)
-				/*const ws = this.app.workspace;
-				const cache = mcache.getFileCache(ws.getActiveFile())
-				// console.log(curs);
-				// console.log(cache)
-				const tasks = cache.listItems.filter(a => !!a.task)
-				const currchildren = tasks.filter(a => a.parent === curs.line)
-				curr*/
 			}
 		});
 		this.registerDomEvent<"click">(window, "click", async (evt) => {
-			// console.log(evt)
 			// @ts-ignore
 			let tgt = evt.target as HTMLElement;
 			let v = this.app.workspace.getActiveViewOfType(MarkdownView)
 			let nes = tgt.nextElementSibling
 			console.debug("tgt", nes, nes?.tagName)
-			// const recurser = (item: any) => {
-			// 	for(let i = 0; i < item.children.length; i++) {
-			// 			let ii = item.children[i];
-			// 			let iii = ii.children[0]  as HTMLElement;
-			// 			let input = ii.querySelector("input[type='checkbox']")
-			// 			console.debug("lili", item.children, ii.children[0], iii)
-			// 			input.click()
-			// 			recurser(iii)
-			// 		}
-			// }
 
 			const recurser = (items: HTMLCollection) => {
 				const arr: any = [];
@@ -106,8 +85,6 @@ export default class MyPlugin extends Plugin {
 				wegottafind.forEach((a: any) => {
 					a.click()
 				})
-				if(tgt.checked) {
-				}
 			} else if(tgt.tagName.toLowerCase() === "input") {
 				let ev = EditorView.findFromDOM(document.body)
 				console.debug("elif")
