@@ -1,7 +1,9 @@
-import { Editor, MarkdownView, Plugin, editorViewField, editorEditorField } from 'obsidian';
+import { DataviewApi, getAPI } from "obsidian-dataview";
+import { Editor, MarkdownView, Plugin, livePreviewState } from 'obsidian';
+
 import { EditorView } from 'codemirror';
-import { getAPI, DataviewApi } from "obsidian-dataview";
 import {TaskUtil} from "./TaskUtil";
+
 // import {findTasksInFile, parseMarkdown, parsePage} from "obsidian-dataview/lib/data/file";
 
 // Remember to rename these classes and interfaces!
@@ -23,6 +25,14 @@ export default class MyPlugin extends Plugin {
 			name: 'check checkbox recursively',
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				this.isWorking = true;
+				const mapper = (z) => {
+					return {
+						line: z.line,
+						parent: z.parent,
+						children: z.children.map(mapper),
+						text: z.text
+					}
+				}
 				const activeFile = this.app.workspace.getActiveFile();
 				const cursor = editor.offsetToPos(this.curnum).line;
 				const source = this.dvapi.page(activeFile.path).file
@@ -32,7 +42,6 @@ export default class MyPlugin extends Plugin {
 				this.recurseSubtasks(children).flat(Infinity).forEach(l => {
 					this.dvapi.index.touch();
 					this.app.workspace.trigger("dataview:refresh-views");
-					let origLine = editor.getLine(parent.line)
 					let line = editor.getLine(l);
 					if(parent.completed) {
 						let edit = this.TU.check(line)
@@ -43,11 +52,11 @@ export default class MyPlugin extends Plugin {
 					}
 				})
 				console.log("hi.")
-				console.log(source.tasks.values)
-				console.log(cursor)
-				console.log(children, parent)
-				console.log(view)
-				console.log(editor)
+				// console.log(cursor)
+				console.log(source.tasks.values.map(mapper))
+				console.log(children, this.recurseSubtasks(children))
+				// console.log(view)
+				// console.log(editor)
 				/*const ws = this.app.workspace;
 				const cache = mcache.getFileCache(ws.getActiveFile())
 				// console.log(curs);
@@ -57,31 +66,85 @@ export default class MyPlugin extends Plugin {
 				curr*/
 			}
 		});
-		this.app.workspace.on("click", async (evt: MouseEvent) => {
+		this.registerDomEvent<"click">(window, "click", async (evt) => {
+			// console.log(evt)
 			// @ts-ignore
-			let tgt: EventTarget & HTMLElement & {cmView: any} = evt.target;
-			if(tgt.tagName.toLowerCase() !== "input" || !!tgt.getAttribute("disabled")) {
+			let tgt = evt.target as HTMLElement;
+			let v = this.app.workspace.getActiveViewOfType(MarkdownView)
+			let nes = tgt.nextElementSibling
+			console.debug("tgt", nes, nes?.tagName)
+			// const recurser = (item: any) => {
+			// 	for(let i = 0; i < item.children.length; i++) {
+			// 			let ii = item.children[i];
+			// 			let iii = ii.children[0]  as HTMLElement;
+			// 			let input = ii.querySelector("input[type='checkbox']")
+			// 			console.debug("lili", item.children, ii.children[0], iii)
+			// 			input.click()
+			// 			recurser(iii)
+			// 		}
+			// }
+
+			const recurser = (items: HTMLCollection) => {
+				const arr: any = [];
+				console.debug("items", items)
+				for(let i = 0; i < items.length; i++) {
+					console.log("ii", items[i])
+					arr.push(items[i].querySelector("input[type='checkbox']"));
+					recurser(items[i].children)
+				}
+				function mapper(b: any) {
+					console.log("la", b)
+					let thing = b.querySelector("ul")
+					if(thing) {
+						for(let i = 0; i < thing.children.length; i++) {
+							console.log("looper", thing.children[i], thing.children)
+							arr.push(thing.children[i].querySelector("input[type='checkbox']"))
+							// recurser(thing.children)
+						}
+					} else {
+					}
+					if(b.querySelector("input[type='checkbox']")) {
+						arr.push(b.querySelector("input[type='checkbox']"))
+					} else {
+						console.log("in else")
+
+					}
+					// arr.push(b.children.map(mapper))
+					// return b.line
+				}
+				return arr;
+			}
+			if(tgt.tagName.toLowerCase() !== "input" && tgt.getAttr("type") !== "checkbox") {
 				return
 			}
-			console.debug("tgt", tgt, editorViewField, editorEditorField)
-			let ev = EditorView.findFromDOM(document.body)
-
-			this.curnum = ev.posAtDOM(tgt);
-			this.dvapi.index.touch();
-			this.app.workspace.trigger("dataview:refresh-views");
-			tgt.setAttribute("disabled", "")
-			await this.timeMe()
-			tgt.removeAttribute("disabled")
 			
-			// @ts-ignore
-			this.app.commands.executeCommandById("obsidian-auto-checkbox:recursive-tick")
+			if (nes?.tagName.toLowerCase() === "ul" && nes?.classList.contains("contains-task-list")) {
+				console.log("nessy", nes, nes.children)
+				// @ts-ignore
+				let wegottafind = recurser(nes.children).flat(Infinity)
+				console.log("reee", wegottafind)
+				wegottafind.forEach((a: any) => {
+					a.click()
+				})
+				if(tgt.checked) {
+				}
+			} else if(tgt.tagName.toLowerCase() === "input" || !(!!tgt.getAttribute("disabled"))) {
+				let ev = EditorView.findFromDOM(document.body)
+				console.debug("elif")
+				this.curnum = ev.posAtDOM(tgt);
+				console.debug(ev.posAtDOM(tgt), this.curnum)
+				this.dvapi.index.touch();
+				this.app.workspace.trigger("dataview:refresh-views");
+				tgt.setAttribute("disabled", "")
+				await this.timeMe()
+				tgt.removeAttribute("disabled")
+				
+				// @ts-ignore
+				this.app.commands.executeCommandById("obsidian-task-completer:recursive-tick")
+			}
+			return;
 			
 		})
-		/* this.registerCodeMirror((cm) => {
-				
-		
-		}) */
-		/* this.registerDomEvent(document, 'click', async ); */
 	}
 	timeMe():Promise<void> {
 		return new Promise((res, rej) => {
