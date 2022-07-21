@@ -8,7 +8,7 @@ import {TaskUtil} from "./TaskUtil";
 
 // Remember to rename these classes and interfaces!
 
-export default class TaskCompleter extends Plugin {
+export default class MyPlugin extends Plugin {
 	dvapi: DataviewApi;
 	TU: TaskUtil;
 	curnum: number;
@@ -52,16 +52,37 @@ export default class TaskCompleter extends Plugin {
 					}
 				})
 				console.log("hi.")
+				// console.log(cursor)
 				console.log(source.tasks.values.map(mapper))
 				console.log(children, this.recurseSubtasks(children))
+				// console.log(view)
+				// console.log(editor)
+				/*const ws = this.app.workspace;
+				const cache = mcache.getFileCache(ws.getActiveFile())
+				// console.log(curs);
+				// console.log(cache)
+				const tasks = cache.listItems.filter(a => !!a.task)
+				const currchildren = tasks.filter(a => a.parent === curs.line)
+				curr*/
 			}
 		});
 		this.registerDomEvent<"click">(window, "click", async (evt) => {
+			// console.log(evt)
 			// @ts-ignore
 			let tgt = evt.target as HTMLElement;
 			let v = this.app.workspace.getActiveViewOfType(MarkdownView)
 			let nes = tgt.nextElementSibling
 			console.debug("tgt", nes, nes?.tagName)
+			// const recurser = (item: any) => {
+			// 	for(let i = 0; i < item.children.length; i++) {
+			// 			let ii = item.children[i];
+			// 			let iii = ii.children[0]  as HTMLElement;
+			// 			let input = ii.querySelector("input[type='checkbox']")
+			// 			console.debug("lili", item.children, ii.children[0], iii)
+			// 			input.click()
+			// 			recurser(iii)
+			// 		}
+			// }
 
 			const recurser = (items: HTMLCollection) => {
 				const arr: any = [];
@@ -85,28 +106,62 @@ export default class TaskCompleter extends Plugin {
 				wegottafind.forEach((a: any) => {
 					a.click()
 				})
+				if(tgt.checked) {
+				}
 			} else if(tgt.tagName.toLowerCase() === "input") {
 				let ev = EditorView.findFromDOM(document.body)
 				console.debug("elif")
 				const {editor} = ev.state.field(editorViewField)
-				const cursor = editor.offsetToPos(ev.posAtDOM(tgt)).line;
+				const cursor = editor.offsetToPos(ev.posAtDOM(tgt)).line
 				const activeFile = this.app.workspace.getActiveFile();
 				const source = this.dvapi.page(activeFile.path).file
-				console.debug(cursor)
 				const children = source.tasks.values.filter((a: any) => a.parent === cursor)
-				this.recurseLivePreviewSubtasks(children).flat(Infinity).forEach(l => {
-					console.debug("take the", l)
-					let {node} = ev.domAtPos(l.start.offset);	
-					// @ts-ignore
-					let qs = node.querySelectorAll("label > input")
-					console.debug(node, qs)
-					qs.forEach(r => r.click())
-					this.dvapi.index.touch();
-					this.app.workspace.trigger("dataview:refresh-views");
+				console.debug("curious cat", children, this.recurseLivePreviewSubtasks(children).flat(Infinity))
+				const all: any[] = []
+				let l = this.recurseLivePreviewSubtasks(children).flat(Infinity)
+				l.forEach(m => {
+					let {node} = ev.domAtPos(m.end.offset);
+					const forEachFunction = (g: Element) => {
+						all.push(g);
+						[].slice.call(g.children).forEach(forEachFunction);
+					};
+					// let qs = node.querySelectorAll()
+					[].slice.call(node.children).forEach(forEachFunction);
 				})
+				
+				let all_2 = all.filter(a => a.matches("input[type='checkbox']"))
+				all_2.forEach(r => {
+					let cH = (e) => {
+						e.stopPropagation()
+						console.log("clik", r)
+					}
+					console.log("retard", r)
+					// r.click()
+					r.onclick = cH
+					r.click()
+					// @ts-ignore
+					console.log("check status", r.checked, tgt.checked)
+					if(!tgt.checked && r.checked) {
+						r.click()
+					} else if(tgt.checked && !r.checked) {
+						r.click()
+					}
+					// if(!node.checked && r.checked) {
+					// }
+				})
+					console.debug("node", all_2)
 				this.dvapi.index.touch();
 				this.app.workspace.trigger("dataview:refresh-views");
+				
+				// @ts-ignore
 			}
+			
+		})
+	}
+	timeMe():Promise<void> {
+		return new Promise((res, rej) => {
+			this.isWorking = false;
+			setTimeout(res, 2500)
 		})
 	}
 	
@@ -127,13 +182,15 @@ export default class TaskCompleter extends Plugin {
 		const arr: any = [];
 		function mapper(b: any) {
 			arr.push(b.children.map(mapper))
-			console.log("la", arr, tasks)
-			return b.position
+			return {
+				...b.position, text: b.text
+			}
 		}
 		tasks.map(a => {
-			arr.push(a.position)
+			arr.push({...a.position, text: a.text})
 		})
 		tasks.map(mapper)
+		console.debug("finalarr", arr.flat(Infinity))
 		return arr;
 	}
 
