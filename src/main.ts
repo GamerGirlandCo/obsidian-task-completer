@@ -104,7 +104,12 @@ export default class MyPlugin extends Plugin {
 				let wegottafind = recurser(nes.children).flat(Infinity)
 				console.log("reee", wegottafind)
 				wegottafind.forEach((a: any) => {
-					a.click()
+					if(!tgt.checked && a.checked) {
+						a.click()
+					// @ts-ignore
+					} else if(tgt.checked && !a.checked) {
+						a.click()
+					}
 				})
 				// if(tgt.checked) {
 				// }
