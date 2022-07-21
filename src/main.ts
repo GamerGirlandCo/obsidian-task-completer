@@ -133,9 +133,8 @@ export default class MyPlugin extends Plugin {
 				all_2.forEach(r => {
 					let cH = (e) => {
 						e.stopPropagation()
-						console.log("clik", r)
+						console.log("clik", e)
 					}
-					console.log("retard", r)
 					// r.click()
 					r.onclick = cH
 					r.click()
@@ -146,10 +145,11 @@ export default class MyPlugin extends Plugin {
 					} else if(tgt.checked && !r.checked) {
 						r.click()
 					}
+					// r.click()
 					// if(!node.checked && r.checked) {
 					// }
 				})
-					console.debug("node", all_2)
+				console.debug("node", all_2)
 				this.dvapi.index.touch();
 				this.app.workspace.trigger("dataview:refresh-views");
 				
