@@ -1,5 +1,5 @@
 import { DataviewApi, getAPI } from "obsidian-dataview";
-import { Editor, MarkdownView, Plugin, livePreviewState } from 'obsidian';
+import { Editor, MarkdownView, Plugin, editorViewField } from 'obsidian';
 
 import { EditorView } from 'codemirror';
 import {TaskUtil} from "./TaskUtil";
@@ -92,26 +92,6 @@ export default class MyPlugin extends Plugin {
 					arr.push(items[i].querySelector("input[type='checkbox']"));
 					recurser(items[i].children)
 				}
-				function mapper(b: any) {
-					console.log("la", b)
-					let thing = b.querySelector("ul")
-					if(thing) {
-						for(let i = 0; i < thing.children.length; i++) {
-							console.log("looper", thing.children[i], thing.children)
-							arr.push(thing.children[i].querySelector("input[type='checkbox']"))
-							// recurser(thing.children)
-						}
-					} else {
-					}
-					if(b.querySelector("input[type='checkbox']")) {
-						arr.push(b.querySelector("input[type='checkbox']"))
-					} else {
-						console.log("in else")
-
-					}
-					// arr.push(b.children.map(mapper))
-					// return b.line
-				}
 				return arr;
 			}
 			if(tgt.tagName.toLowerCase() !== "input" && tgt.getAttr("type") !== "checkbox") {
@@ -128,28 +108,28 @@ export default class MyPlugin extends Plugin {
 				})
 				if(tgt.checked) {
 				}
-			} else if(tgt.tagName.toLowerCase() === "input" || !(!!tgt.getAttribute("disabled"))) {
+			} else if(tgt.tagName.toLowerCase() === "input") {
 				let ev = EditorView.findFromDOM(document.body)
 				console.debug("elif")
-				this.curnum = ev.posAtDOM(tgt);
-				console.debug(ev.posAtDOM(tgt), this.curnum)
+				const {editor} = ev.state.field(editorViewField)
+				const cursor = editor.offsetToPos(ev.posAtDOM(tgt)).line;
+				const activeFile = this.app.workspace.getActiveFile();
+				const source = this.dvapi.page(activeFile.path).file
+				console.debug(cursor)
+				const children = source.tasks.values.filter((a: any) => a.parent === cursor)
+				this.recurseLivePreviewSubtasks(children).flat(Infinity).forEach(l => {
+					console.debug("take the", l)
+					let {node} = ev.domAtPos(l.start.offset);	
+					// @ts-ignore
+					let qs = node.querySelectorAll("label > input")
+					console.debug(node, qs)
+					qs.forEach(r => r.click())
+					this.dvapi.index.touch();
+					this.app.workspace.trigger("dataview:refresh-views");
+				})
 				this.dvapi.index.touch();
 				this.app.workspace.trigger("dataview:refresh-views");
-				tgt.setAttribute("disabled", "")
-				await this.timeMe()
-				tgt.removeAttribute("disabled")
-				
-				// @ts-ignore
-				this.app.commands.executeCommandById("obsidian-task-completer:recursive-tick")
 			}
-			return;
-			
-		})
-	}
-	timeMe():Promise<void> {
-		return new Promise((res, rej) => {
-			this.isWorking = false;
-			setTimeout(res, 2500)
 		})
 	}
 	
@@ -162,6 +142,19 @@ export default class MyPlugin extends Plugin {
 		}
 		tasks.map(a => {
 			arr.push(a.line)
+		})
+		tasks.map(mapper)
+		return arr;
+	}
+	recurseLivePreviewSubtasks(tasks: any[]): Array<any> {
+		const arr: any = [];
+		function mapper(b: any) {
+			arr.push(b.children.map(mapper))
+			console.log("la", arr, tasks)
+			return b.position
+		}
+		tasks.map(a => {
+			arr.push(a.position)
 		})
 		tasks.map(mapper)
 		return arr;
