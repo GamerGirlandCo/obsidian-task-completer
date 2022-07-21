@@ -20,52 +20,6 @@ export default class MyPlugin extends Plugin {
 		this.isWorking = false;
 		this.dvapi = getAPI();
 		this.TU = new TaskUtil()
-		this.addCommand({
-			id: 'recursive-tick',
-			name: 'check checkbox recursively',
-			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				this.isWorking = true;
-				const mapper = (z: any) => {
-					return {
-						line: z.line,
-						parent: z.parent,
-						children: z.children.map(mapper),
-						text: z.text
-					}
-				}
-				const activeFile = this.app.workspace.getActiveFile();
-				const cursor = editor.offsetToPos(this.curnum).line;
-				const source = this.dvapi.page(activeFile.path).file
-				const children = source.tasks.values.filter((a: any) => a.parent === cursor)
-				const parent = source.tasks.values.filter((a: any) => a.line === cursor)[0]
-				editor.setCursor(cursor)
-				this.recurseSubtasks(children).flat(Infinity).forEach(l => {
-					this.dvapi.index.touch();
-					this.app.workspace.trigger("dataview:refresh-views");
-					let line = editor.getLine(l);
-					if(parent.completed) {
-						let edit = this.TU.check(line)
-						editor.setLine(l, edit)
-					} else {
-						let edit = this.TU.uncheck(line);
-						editor.setLine(l, edit);
-					}
-				})
-				console.log("hi.")
-				// console.log(cursor)
-				console.log(source.tasks.values.map(mapper))
-				console.log(children, this.recurseSubtasks(children))
-				// console.log(view)
-				// console.log(editor)
-				/*const ws = this.app.workspace;
-				const cache = mcache.getFileCache(ws.getActiveFile())
-				// console.log(curs);
-				// console.log(cache)
-				const tasks = cache.listItems.filter(a => !!a.task)
-				const currchildren = tasks.filter(a => a.parent === curs.line)
-				curr*/
-			}
-		});
 		this.registerDomEvent<"click">(window, "click", async (evt) => {
 			// console.log(evt)
 			// @ts-ignore
