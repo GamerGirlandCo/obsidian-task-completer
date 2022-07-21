@@ -25,7 +25,7 @@ export default class MyPlugin extends Plugin {
 			name: 'check checkbox recursively',
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				this.isWorking = true;
-				const mapper = (z) => {
+				const mapper = (z: any) => {
 					return {
 						line: z.line,
 						parent: z.parent,
@@ -106,8 +106,8 @@ export default class MyPlugin extends Plugin {
 				wegottafind.forEach((a: any) => {
 					a.click()
 				})
-				if(tgt.checked) {
-				}
+				// if(tgt.checked) {
+				// }
 			} else if(tgt.tagName.toLowerCase() === "input") {
 				let ev = EditorView.findFromDOM(document.body)
 				console.debug("elif")
@@ -125,29 +125,27 @@ export default class MyPlugin extends Plugin {
 						all.push(g);
 						[].slice.call(g.children).forEach(forEachFunction);
 					};
-					// let qs = node.querySelectorAll()
+					// @ts-ignore
 					[].slice.call(node.children).forEach(forEachFunction);
 				})
 				
 				let all_2 = all.filter(a => a.matches("input[type='checkbox']"))
 				all_2.forEach(r => {
-					let cH = (e) => {
-						e.stopPropagation()
+					let cH = (e: any) => {
+						// e.stopPropagation()
 						console.log("clik", e)
 					}
-					// r.click()
 					r.onclick = cH
 					r.click()
 					// @ts-ignore
 					console.log("check status", r.checked, tgt.checked)
+					// @ts-ignore
 					if(!tgt.checked && r.checked) {
 						r.click()
+					// @ts-ignore
 					} else if(tgt.checked && !r.checked) {
 						r.click()
 					}
-					// r.click()
-					// if(!node.checked && r.checked) {
-					// }
 				})
 				console.debug("node", all_2)
 				this.dvapi.index.touch();
@@ -156,12 +154,6 @@ export default class MyPlugin extends Plugin {
 				// @ts-ignore
 			}
 			
-		})
-	}
-	timeMe():Promise<void> {
-		return new Promise((res, rej) => {
-			this.isWorking = false;
-			setTimeout(res, 2500)
 		})
 	}
 	
