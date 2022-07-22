@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-task-completer",
+	"name": "Obsidian Automatic Recursive Task Completer",
+	"version": "1.1.1",
+	"minAppVersion": "0.15.4",
+	"description": "when you complete a task, this plugin also automatically marks all subtasks as done, so you no longer have to click/toggle every subtask manually.",
+	"author": "Tablet",
+	"authorUrl": "https://instagram.com/gamergirlandco",
+	"isDesktopOnly": false
+}
