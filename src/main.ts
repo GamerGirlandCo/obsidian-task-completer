@@ -74,13 +74,15 @@ export default class MyPlugin extends Plugin {
 				const all: any[] = []
 				let l = this.recurseLivePreviewSubtasks(children).flat(Infinity)
 				l.forEach(m => {
-					let {node} = ev.domAtPos(m.end.offset);
+					let {node} = ev.domAtPos(m.start.offset);
 					const forEachFunction = (g: Element) => {
+						// const element = 
+						console.log("g = ", g)
 						all.push(g);
 						[].slice.call(g.children).forEach(forEachFunction);
 					};
 					// @ts-ignore
-					[].slice.call(node.children).forEach(forEachFunction);
+					[].slice.call(node.parentElement.parentElement.parentElement.children).forEach(forEachFunction);
 				})
 				
 				let all_2 = all.filter(a => a.matches("input[type='checkbox']"))
@@ -91,6 +93,7 @@ export default class MyPlugin extends Plugin {
 					}
 					r.onclick = cH
 					r.click()
+
 					// @ts-ignore
 					console.log("check status", r.checked, tgt.checked)
 					// @ts-ignore

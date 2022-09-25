@@ -1,7 +1,7 @@
-import esbuild from "esbuild";
-import process from "process";
 import builtins from 'builtin-modules'
+import esbuild from "esbuild";
 import {execSync} from "child_process";
+import process from "process";
 
 const banner =
 `/*
