@@ -55,9 +55,11 @@ export default class MyPlugin extends Plugin {
 				wegottafind.forEach((a: any) => {
 					if(!tgt.checked && a.checked) {
 						a.click()
+						console.log("11")
 					// @ts-ignore
 					} else if(tgt.checked && !a.checked) {
 						a.click()
+						console.log("22")
 					}
 				})
 				// if(tgt.checked) {
@@ -77,7 +79,7 @@ export default class MyPlugin extends Plugin {
 					let {node} = ev.domAtPos(m.start.offset);
 					const forEachFunction = (g: Element) => {
 						// const element = 
-						console.log("g = ", g)
+						// console.log("g = ", g)
 						all.push(g);
 						[].slice.call(g.children).forEach(forEachFunction);
 					};
@@ -88,19 +90,24 @@ export default class MyPlugin extends Plugin {
 				let all_2 = all.filter(a => a.matches("input[type='checkbox']"))
 				all_2.forEach(r => {
 					let cH = (e: any) => {
+						console.debug("check status", r.checked, tgt.checked)
+
 						// e.stopPropagation()
-						console.log("clik", e)
+						console.log("clik", r.checked, r, tgt.checked);
+						(!!(tgt.checked | r.checked))  && party?.confetti(r)
 					}
 					r.onclick = cH
 					r.click()
 
 					// @ts-ignore
-					console.log("check status", r.checked, tgt.checked)
 					// @ts-ignore
 					if(!tgt.checked && r.checked) {
+						console.log("1")
+						// party?.confetti(tgt)
 						r.click()
 					// @ts-ignore
 					} else if(tgt.checked && !r.checked) {
+						console.log("2")
 						r.click()
 					}
 				})
