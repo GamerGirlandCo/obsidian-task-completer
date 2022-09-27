@@ -66,6 +66,7 @@ export default class MyPlugin extends Plugin {
 				// if(tgt.checked) {
 				// }
 			} else if(tgt.tagName.toLowerCase() === "input") {
+				if(tgt.offsetParent.classList.contains("cm-embed-block")) return
 				let ev = EditorView.findFromDOM(tgt.offsetParent.cmView.dom)
 				console.debug("elif", tgt.parentElement.cmView)
 				const {editor} = ev.state.field(editorViewField)
@@ -87,6 +88,7 @@ export default class MyPlugin extends Plugin {
 					};
 
 					// @ts-ignore
+
 					[].slice.call(node.parentElement.parentElement.parentElement.children).forEach(forEachFunction);
 				})
 				console.log("all", all)
