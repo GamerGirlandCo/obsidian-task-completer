@@ -17,11 +17,12 @@ export default class MyPlugin extends Plugin {
 		this.TU = new TaskUtil()
 		this.registerDomEvent<"click">(window, "click", async (evt) => {
 			// console.log(evt)
+			// evt.stopImmediatePropagation()
 			// @ts-ignore
 			let tgt = evt.target as HTMLElement;
 			let v = this.app.workspace.getActiveViewOfType(MarkdownView)
 			let nes = tgt.nextElementSibling
-			console.debug("tgt", nes, nes?.tagName)
+			console.debug("tgt", tgt, nes, nes?.tagName)
 			// const recurser = (item: any) => {
 			// 	for(let i = 0; i < item.children.length; i++) {
 			// 			let ii = item.children[i];
@@ -65,28 +66,30 @@ export default class MyPlugin extends Plugin {
 				// if(tgt.checked) {
 				// }
 			} else if(tgt.tagName.toLowerCase() === "input") {
-				let ev = EditorView.findFromDOM(document.body)
-				console.debug("elif")
+				let ev = EditorView.findFromDOM(tgt.offsetParent.cmView.dom)
+				console.debug("elif", tgt.parentElement.cmView)
 				const {editor} = ev.state.field(editorViewField)
 				const cursor = editor.offsetToPos(ev.posAtDOM(tgt)).line
 				const activeFile = this.app.workspace.getActiveFile();
 				const source = this.dvapi.page(activeFile.path).file
 				const children = source.tasks.values.filter((a: any) => a.parent === cursor)
-				console.debug("curious cat", children, this.recurseLivePreviewSubtasks(children).flat(Infinity))
+				console.debug("curious cat", cursor, children, this.recurseLivePreviewSubtasks(children).flat(Infinity))
 				const all: any[] = []
 				let l = this.recurseLivePreviewSubtasks(children).flat(Infinity)
 				l.forEach(m => {
 					let {node} = ev.domAtPos(m.start.offset);
 					const forEachFunction = (g: Element) => {
 						// const element = 
-						// console.log("g = ", g)
+						// node.parentElement.style.border = "3px solid red"
+						// console.log("g = ", g, node)
 						all.push(g);
 						[].slice.call(g.children).forEach(forEachFunction);
 					};
+
 					// @ts-ignore
 					[].slice.call(node.parentElement.parentElement.parentElement.children).forEach(forEachFunction);
 				})
-				
+				console.log("all", all)
 				let all_2 = all.filter(a => a.matches("input[type='checkbox']"))
 				all_2.forEach(r => {
 					let cH = (e: any) => {
